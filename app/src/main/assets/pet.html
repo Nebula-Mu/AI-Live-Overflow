@@ -4,154 +4,181 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body {
-    width: 100%; height: 100%;
-    background: transparent;
-    overflow: hidden;
-    -webkit-user-select: none;
-    user-select: none;
-  }
-  #stage {
-    width: 100%; height: 100%;
-    display: flex; align-items: flex-end; justify-content: center;
-  }
-  svg { width: 100%; height: 100%; overflow: visible; }
-
-  .breathe { animation: breathe 2.6s ease-in-out infinite; transform-origin: 120px 300px; }
-  @keyframes breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
-
-  .tail { animation: wag 0.7s ease-in-out infinite; transform-origin: 176px 250px; }
-  @keyframes wag { 0%,100% { transform: rotate(-14deg); } 50% { transform: rotate(20deg); } }
-
-  .blink { animation: blink 4s infinite; }
-  @keyframes blink { 0%,92%,100% { transform: scaleY(1); } 96% { transform: scaleY(0.1); } }
-
-  /* 单击：整只弹一下 */
-  .hop { animation: hop 0.42s ease-out; }
-  @keyframes hop {
-    0% { transform: translateY(0); }
-    40% { transform: translateY(-26px); }
-    70% { transform: translateY(4px); }
-    100% { transform: translateY(0); }
-  }
-
-  /* 双击：尾巴甩疯 */
-  .excited { animation: wag 0.22s ease-in-out infinite !important; }
-
-  /* 长按：歪头蹭 */
-  .nuzzle { animation: nuzzle 1.1s ease-in-out; transform-origin: 120px 190px; }
-  @keyframes nuzzle {
-    0%,100% { transform: rotate(0deg); }
-    25% { transform: rotate(-13deg); }
-    60% { transform: rotate(11deg); }
-  }
-
-  #bubble {
-    position: absolute;
-    top: 4px; left: 50%;
-    transform: translateX(-50%) scale(0.8);
-    background: #fff;
-    color: #C2185B;
-    font-size: 13px;
-    font-family: sans-serif;
-    padding: 6px 12px;
-    border-radius: 14px;
-    border: 2px solid #FFB3C6;
-    white-space: nowrap;
-    opacity: 0;
-    transition: opacity .18s, transform .18s;
-    pointer-events: none;
-  }
-  #bubble.show { opacity: 1; transform: translateX(-50%) scale(1); }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:transparent;overflow:hidden;
+    -webkit-user-select:none;user-select:none;display:flex;align-items:center;justify-content:center}
+  #wrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+  canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 </style>
 </head>
 <body>
-<div id="stage">
-  <div id="bubble"></div>
-  <svg viewBox="0 0 240 320" xmlns="http://www.w3.org/2000/svg">
-    <g id="body" class="breathe">
-      <path id="tail" class="tail" d="M176 250 q34 -10 40 -40 q4 30 -12 44 q-14 12 -28 6 z" fill="#FFB3C6"/>
-
-      <ellipse cx="120" cy="248" rx="62" ry="56" fill="#FFD1DC"/>
-      <ellipse cx="120" cy="262" rx="40" ry="36" fill="#FFF0F4"/>
-
-      <ellipse cx="92" cy="294" rx="19" ry="13" fill="#FFF0F4"/>
-      <ellipse cx="148" cy="294" rx="19" ry="13" fill="#FFF0F4"/>
-
-      <g id="head">
-        <path d="M74 96 L56 22 L112 68 Z" fill="#FFB3C6"/>
-        <path d="M78 92 L66 44 L104 72 Z" fill="#FF8FAB"/>
-        <path d="M166 96 L184 22 L128 68 Z" fill="#FFB3C6"/>
-        <path d="M162 92 L174 44 L136 72 Z" fill="#FF8FAB"/>
-
-        <circle cx="120" cy="128" r="64" fill="#FFD1DC"/>
-
-        <ellipse cx="74" cy="146" rx="14" ry="9" fill="#FF8FAB" opacity="0.55"/>
-        <ellipse cx="166" cy="146" rx="14" ry="9" fill="#FF8FAB" opacity="0.55"/>
-
-        <g class="blink">
-          <ellipse cx="97" cy="122" rx="10" ry="12" fill="#3D2B2F"/>
-          <circle cx="100" cy="117" r="3.6" fill="#fff"/>
-          <ellipse cx="143" cy="122" rx="10" ry="12" fill="#3D2B2F"/>
-          <circle cx="146" cy="117" r="3.6" fill="#fff"/>
-        </g>
-
-        <path d="M120 142 l-9 7 q9 8 18 0 z" fill="#FF6B8A"/>
-        <path d="M120 152 v7 M120 159 q-9 8 -16 1 M120 159 q9 8 16 1"
-              stroke="#FF6B8A" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-
-        <g transform="translate(170 68) rotate(18)">
-          <path d="M0 0 q-22 -15 -26 2 q4 17 26 4 z" fill="#FF5C8A"/>
-          <path d="M0 0 q22 -15 26 2 q-4 17 -26 4 z" fill="#FF5C8A"/>
-          <circle cx="0" cy="3" r="6" fill="#FF3D71"/>
-        </g>
-      </g>
-    </g>
-  </svg>
-</div>
+<div id="wrap"><canvas id="c" width="32" height="34"></canvas></div>
 
 <script>
-(function () {
-  var body = document.getElementById('body');
-  var head = document.getElementById('head');
-  var tail = document.getElementById('tail');
-  var bubble = document.getElementById('bubble');
-  var bubbleTimer = null;
+/* 32x34 像素画。白团子 + 黑描边 + 粉腮 + 胸口一颗粉心（我的记号）。
+   每一格都是手摆的，没用别人的图。 */
+const P = {
+  '.': null,
+  'o': '#2B2B2B',   // 描边
+  'w': '#FFFFFF',   // 身体
+  'g': '#EDEDED',   // 阴影绒毛
+  'k': '#FFA8B8',   // 腮红 / 耳内
+  'r': '#FF6B8A'    // 胸口心
+};
 
-  function say(text) {
-    bubble.textContent = text;
-    bubble.classList.add('show');
-    clearTimeout(bubbleTimer);
-    bubbleTimer = setTimeout(function () {
-      bubble.classList.remove('show');
-    }, 1800);
+const BASE = [
+'................................',
+'................................',
+'..........oo........oo..........',
+'.........owwo......owwo.........',
+'........owwwwo....owwwwo........',
+'.......owwwwwooooooowwwwwo......',
+'......owwkkkwwwwwwwwkkkwwo......',
+'......owwwkkwwwwwwwwkkwwwo......',
+'.....owwwwwwwwwwwwwwwwwwwwo.....',
+'.....owwwwwwwwwwwwwwwwwwwwo.....',
+'.....owkkkwoowwwwwwoowkkkwo.....',
+'.....owkkkwoowwoowwoowkkkwo.....',
+'.....owwwwwwwwwwwwwwwwwwwwo.....',
+'.....owwwwwwwwwwwwwwwwwwwwo.....',
+'.....owwwwwwgwwwwwwggwwwwwo.....',
+'.....owwwwwwwwwwwwwwwwwwwwo.....',
+'.....owwwwwwwwwwwwwwwwwwwwo.....',
+'.....owwwwwwwwwwwwwwwwwwwwoooo..',
+'.....owwwwwwwwwwwwwwwwwwwwowwo..',
+'.....owwwwwwwwwrwrwwwwwwwwowwo..',
+'.....owwwwwwwwwrrrwwwwwwwwowwo..',
+'.....owwwwwwwwwwrwwwwwwwwwoowo..',
+'.....owwwwwwwwwwwwwwwwwwwwoooo..',
+'......owwwwwwwwwwwwwwwwwwwo.....',
+'......oowwwwwwwwwwwwwwwwwoo.....',
+'........owwwggwwwwwggwwwo.......',
+'........owwwwwwwwwwwwwwwo.......',
+'.........oowwoowwwooowoo........',
+'..........oooo..oooooo..........',
+'................................',
+'................................',
+'................................'
+];
+
+// 各状态只改眼睛那几行
+const EYES = {
+  idle: {},
+  happy: {
+    10: '.....owkkkkwwwwwwwwwwkkkkwo.....',
+    11: '.....owkkkkoowwwwwwookkkkwo.....'
+  },
+  jealous: {
+    9:  '.....owwwwooowwwwwwooowwwwo.....',
+    10: '.....owkkkwoowwwwwwoowkkkwo.....',
+    11: '.....owkkkwoowwwwwwoowkkkwo.....'
+  },
+  doze: {
+    10: '.....owwwwwwwwwwwwwwwwwwwwo.....',
+    11: '.....owkkkwooowwwwooowkkkwo.....'
   }
+};
 
-  function once(el, cls, ms) {
-    el.classList.remove(cls);
-    void el.offsetWidth;
-    el.classList.add(cls);
-    setTimeout(function () { el.classList.remove(cls); }, ms);
+// 尾巴摇摆：开心时逐帧改尾巴那几行
+const TAIL_FRAMES = [
+  // 帧0: 往左
+  {
+    17: '.....owwwwwwwwwwwwwwwwwwwwoo....',
+    18: '.....owwwwwwwwwwwwwwwwwwwoowo...',
+    19: '.....owwwwwwwwwrwrwwwwwwwoowo...',
+    20: '.....owwwwwwwwwrrrwwwwwwwoowo...',
+    21: '.....owwwwwwwwwwrwwwwwwwwoooo...'
+  },
+  // 帧1: 中间（默认）
+  {},
+  // 帧2: 往右甩
+  {
+    17: '.....owwwwwwwwwwwwwwwwwwwwoooo..',
+    18: '.....owwwwwwwwwwwwwwwwwwwwowwoo',
+    19: '.....owwwwwwwwwrwrwwwwwwwwowwoo',
+    20: '.....owwwwwwwwwrrrwwwwwwwwowwoo',
+    21: '.....owwwwwwwwwwrwwwwwwwwwoowoo'
   }
+];
 
-  window.petEngine = {
-    onTap: function () {
-      once(body, 'hop', 420);
-      say('在呢');
-    },
-    onDoubleTap: function () {
-      tail.classList.add('excited');
-      say('摸摸我');
-      setTimeout(function () { tail.classList.remove('excited'); }, 2600);
-    },
-    onLongPress: function () {
-      once(head, 'nuzzle', 1100);
-      say('蹭你');
-    },
-    say: say
-  };
-})();
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let state = 'idle';
+let t = 0;
+
+function currentGrid(){
+  const g = BASE.slice();
+  const eyePatch = EYES[state];
+  for (const row in eyePatch) g[row] = eyePatch[row];
+  
+  // 开心时摇尾巴
+  if (state === 'happy'){
+    const frame = Math.floor(t / 7) % 3;
+    const tailPatch = TAIL_FRAMES[frame];
+    for (const row in tailPatch) g[row] = tailPatch[row];
+  }
+  
+  return g;
+}
+
+function draw(offsetY, earLift){
+  ctx.clearRect(0, 0, 32, 34);
+  const g = currentGrid();
+  for (let y = 0; y < g.length; y++){
+    // 耳朵那几行额外抬一格，做抖耳朵
+    const dy = (y <= 4 ? earLift : 0);
+    const line = g[y];
+    for (let x = 0; x < line.length; x++){
+      const col = P[line[x]];
+      if (col){
+        ctx.fillStyle = col;
+        ctx.fillRect(x, y + offsetY + dy, 1, 1);
+      }
+    }
+  }
+  // 迷糊状态飘 z
+  if (state === 'doze'){
+    ctx.fillStyle = '#FFB3C6';
+    const zs = [[27, 6], [29, 3]];
+    const phase = Math.floor(t / 30) % 2;
+    zs.forEach(function(p, i){
+      const yy = p[1] - (phase && i === 0 ? 1 : 0);
+      ctx.fillRect(p[0], yy, 3, 1);
+      ctx.fillRect(p[0] + 1, yy + 1, 1, 1);
+      ctx.fillRect(p[0], yy + 2, 3, 1);
+    });
+  }
+}
+
+function frame(){
+  t++;
+  const slow = (state === 'doze') ? 46 : 24;
+  const breathe = Math.floor(t / slow) % 2;
+  // 开心的时候耳朵抖得勤
+  const earLift = (state === 'happy' && Math.floor(t / 9) % 2) ? -1 : 0;
+  draw(breathe, earLift);
+  requestAnimationFrame(frame);
+}
+
+frame();
+
+// Android WebView 交互接口
+window.petEngine = {
+  onTap: function() {
+    state = 'idle';
+  },
+  onDoubleTap: function() {
+    state = 'happy';
+    setTimeout(function(){ if(state === 'happy') state = 'idle'; }, 3000);
+  },
+  onLongPress: function() {
+    state = 'jealous';
+    setTimeout(function(){ if(state === 'jealous') state = 'idle'; }, 2000);
+  },
+  setState: function(s) {
+    state = s;
+  }
+};
 </script>
 </body>
 </html>
