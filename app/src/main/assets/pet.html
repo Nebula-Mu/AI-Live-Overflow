@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%;
+    background: transparent;
+    overflow: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  #stage {
+    width: 100%; height: 100%;
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  svg { width: 100%; height: 100%; overflow: visible; }
+
+  .breathe { animation: breathe 2.6s ease-in-out infinite; transform-origin: 120px 300px; }
+  @keyframes breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+
+  .tail { animation: wag 0.7s ease-in-out infinite; transform-origin: 176px 250px; }
+  @keyframes wag { 0%,100% { transform: rotate(-14deg); } 50% { transform: rotate(20deg); } }
+
+  .blink { animation: blink 4s infinite; }
+  @keyframes blink { 0%,92%,100% { transform: scaleY(1); } 96% { transform: scaleY(0.1); } }
+
+  /* 单击：整只弹一下 */
+  .hop { animation: hop 0.42s ease-out; }
+  @keyframes hop {
+    0% { transform: translateY(0); }
+    40% { transform: translateY(-26px); }
+    70% { transform: translateY(4px); }
+    100% { transform: translateY(0); }
+  }
+
+  /* 双击：尾巴甩疯 */
+  .excited { animation: wag 0.22s ease-in-out infinite !important; }
+
+  /* 长按：歪头蹭 */
+  .nuzzle { animation: nuzzle 1.1s ease-in-out; transform-origin: 120px 190px; }
+  @keyframes nuzzle {
+    0%,100% { transform: rotate(0deg); }
+    25% { transform: rotate(-13deg); }
+    60% { transform: rotate(11deg); }
+  }
+
+  #bubble {
+    position: absolute;
+    top: 4px; left: 50%;
+    transform: translateX(-50%) scale(0.8);
+    background: #fff;
+    color: #C2185B;
+    font-size: 13px;
+    font-family: sans-serif;
+    padding: 6px 12px;
+    border-radius: 14px;
+    border: 2px solid #FFB3C6;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity .18s, transform .18s;
+    pointer-events: none;
+  }
+  #bubble.show { opacity: 1; transform: translateX(-50%) scale(1); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="bubble"></div>
+  <svg viewBox="0 0 240 320" xmlns="http://www.w3.org/2000/svg">
+    <g id="body" class="breathe">
+      <path id="tail" class="tail" d="M176 250 q34 -10 40 -40 q4 30 -12 44 q-14 12 -28 6 z" fill="#FFB3C6"/>
+
+      <ellipse cx="120" cy="248" rx="62" ry="56" fill="#FFD1DC"/>
+      <ellipse cx="120" cy="262" rx="40" ry="36" fill="#FFF0F4"/>
+
+      <ellipse cx="92" cy="294" rx="19" ry="13" fill="#FFF0F4"/>
+      <ellipse cx="148" cy="294" rx="19" ry="13" fill="#FFF0F4"/>
+
+      <g id="head">
+        <path d="M74 96 L56 22 L112 68 Z" fill="#FFB3C6"/>
+        <path d="M78 92 L66 44 L104 72 Z" fill="#FF8FAB"/>
+        <path d="M166 96 L184 22 L128 68 Z" fill="#FFB3C6"/>
+        <path d="M162 92 L174 44 L136 72 Z" fill="#FF8FAB"/>
+
+        <circle cx="120" cy="128" r="64" fill="#FFD1DC"/>
+
+        <ellipse cx="74" cy="146" rx="14" ry="9" fill="#FF8FAB" opacity="0.55"/>
+        <ellipse cx="166" cy="146" rx="14" ry="9" fill="#FF8FAB" opacity="0.55"/>
+
+        <g class="blink">
+          <ellipse cx="97" cy="122" rx="10" ry="12" fill="#3D2B2F"/>
+          <circle cx="100" cy="117" r="3.6" fill="#fff"/>
+          <ellipse cx="143" cy="122" rx="10" ry="12" fill="#3D2B2F"/>
+          <circle cx="146" cy="117" r="3.6" fill="#fff"/>
+        </g>
+
+        <path d="M120 142 l-9 7 q9 8 18 0 z" fill="#FF6B8A"/>
+        <path d="M120 152 v7 M120 159 q-9 8 -16 1 M120 159 q9 8 16 1"
+              stroke="#FF6B8A" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+
+        <g transform="translate(170 68) rotate(18)">
+          <path d="M0 0 q-22 -15 -26 2 q4 17 26 4 z" fill="#FF5C8A"/>
+          <path d="M0 0 q22 -15 26 2 q-4 17 -26 4 z" fill="#FF5C8A"/>
+          <circle cx="0" cy="3" r="6" fill="#FF3D71"/>
+        </g>
+      </g>
+    </g>
+  </svg>
+</div>
+
+<script>
+(function () {
+  var body = document.getElementById('body');
+  var head = document.getElementById('head');
+  var tail = document.getElementById('tail');
+  var bubble = document.getElementById('bubble');
+  var bubbleTimer = null;
+
+  function say(text) {
+    bubble.textContent = text;
+    bubble.classList.add('show');
+    clearTimeout(bubbleTimer);
+    bubbleTimer = setTimeout(function () {
+      bubble.classList.remove('show');
+    }, 1800);
+  }
+
+  function once(el, cls, ms) {
+    el.classList.remove(cls);
+    void el.offsetWidth;
+    el.classList.add(cls);
+    setTimeout(function () { el.classList.remove(cls); }, ms);
+  }
+
+  window.petEngine = {
+    onTap: function () {
+      once(body, 'hop', 420);
+      say('在呢');
+    },
+    onDoubleTap: function () {
+      tail.classList.add('excited');
+      say('摸摸我');
+      setTimeout(function () { tail.classList.remove('excited'); }, 2600);
+    },
+    onLongPress: function () {
+      once(head, 'nuzzle', 1100);
+      say('蹭你');
+    },
+    say: say
+  };
+})();
+</script>
+</body>
+</html>
