@@ -1,243 +1,253 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  html,body{width:100%;height:100%;background:transparent;overflow:hidden;
-    -webkit-user-select:none;user-select:none;display:flex;align-items:center;justify-content:center}
-  #wrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
-  canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block;width:100%;height:auto}
+html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:transparent;}
+#wrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+#c{display:block;width:100%;height:auto;image-rendering:pixelated;image-rendering:crisp-edges;}
 </style>
 </head>
 <body>
 <div id="wrap"><canvas id="c" width="32" height="34"></canvas></div>
-
 <script>
-/* 32x34 像素画。白团子 + 黑描边 + 粉腮 + 胸口一颗粉心（我的记号）。
-   每一格都是手摆的，没用别人的图。 */
+// 32x34 像素画。白团子 + 黑描边 + 粉腮 + 胸口一颗粉心（我的记号）。
+// 每一格都是手摆的，没用别人的图。
+
 const P = {
   '.': null,
-  'o': '#2B2B2B',   // 描边
-  'w': '#FFFFFF',   // 身体
-  'g': '#EDEDED',   // 阴影绒毛
-  'k': '#FFA8B8',   // 腮红 / 耳内
-  'r': '#FF6B8A',   // 胸口心
-  'h': '#1A1A1A',   // 耳机深色
-  'y': '#FFD700',   // 金链子
-  'c': '#00CED1',   // 眼镜青
-  'b': '#8B4513',   // 头巾棕
-  'p': '#FF1493'    // 蝴蝶结粉
+  'o': '#2B2B2B',  // 描边
+  'w': '#FFFFFF',  // 身体
+  'g': '#EDEDED',  // 阴影绒毛
+  'k': '#FFA8B8',  // 腮红/耳内
+  'r': '#FF6B8A',  // 胸口心
+  'h': '#3A3A3A',  // 耳机/眼镜框
+  'y': '#FFD700',  // 金链
+  'c': '#87CEEB',  // 镜片
+  'n': '#FF8C42',  // 头巾
+  'p': '#FF69B4'   // 蝴蝶结
 };
 
 const BASE = [
-'................................',
-'................................',
-'..........oo........oo..........',
-'.........owwo......owwo.........',
-'........owwwwo....owwwwo........',
-'.......owwwwwooooooowwwwwo......',
-'......owwkkkwwwwwwwwkkkwwo......',
-'......owwwkkwwwwwwwwkkwwwo......',
-'.....owwwwwwwwwwwwwwwwwwwwo.....',
-'.....owwwwwwwwwwwwwwwwwwwwo.....',
-'.....owkkkwoowwwwwwoowkkkwo.....',
-'.....owkkkwoowwoowwoowkkkwo.....',
-'.....owwwwwwwwwwwwwwwwwwwwo.....',
-'.....owwwwwwwwwwwwwwwwwwwwo.....',
-'.....owwwwwwgwwwwwwggwwwwwo.....',
-'.....owwwwwwwwwwwwwwwwwwwwo.....',
-'.....owwwwwwwwwwwwwwwwwwwwo.....',
-'.....owwwwwwwwwwwwwwwwwwwwoooo..',
-'.....owwwwwwwwwwwwwwwwwwwwowwo..',
-'.....owwwwwwwwwrwrwwwwwwwwowwo..',
-'.....owwwwwwwwwrrrwwwwwwwwowwo..',
-'.....owwwwwwwwwwrwwwwwwwwwoowo..',
-'.....owwwwwwwwwwwwwwwwwwwwoooo..',
-'......owwwwwwwwwwwwwwwwwwwo.....',
-'......oowwwwwwwwwwwwwwwwwoo.....',
-'........owwwggwwwwwggwwwo.......',
-'........owwwwwwwwwwwwwwwo.......',
-'.........oowwoowwwooowoo........',
-'..........oooo..oooooo..........',
-'................................',
-'................................',
-'................................'
+  '................................',
+  '................................',
+  '.........oooooo.....oooooo......',
+  '.......oowwwwwwoo.oowwwwwwoo....',
+  '......owwwwwwwwwoowwwwwwwwwo....',
+  '.....owwwwwwwwwwwwwwwwwwwwwwo...',
+  '.....owkkowwwwwwwwwwwwwookkwo...',
+  '.....owwwwwwwwwwwwwwwwwwwwwwo...',
+  '....owwwwwwwwwwwwwwwwwwwwwwwwo..',
+  '....owwwooowwwwwwwwwwwooowwwwo..',
+  '....owwoooowwwwwwwwwwwoooowwwo..',
+  '....owwwooowwwwwwwwwwwooowwwwo..',
+  '...owwwwwwwwwwwwwwwwwwwwwwwwwwo.',
+  '...owwwwwwwwwwrrwwwwwwwwwwwwwwo.',
+  '...owwwwwwwwwwrrwwwwwwwwwwwwwwo.',
+  '...owwwwwwwwwwwwwwwwwwwwwwwwwwo.',
+  '...owwwwwwwwwwwwwwwwwwwwwwwwwwo.',
+  '...owwwwwwoooooooooooowwwwwwwwo.',
+  '...owwwwwo..............owwwwwo.',
+  '...owwwwo................owwwwo.',
+  '...owwwo..................owwwo.',
+  '..owwwo....................owwwo',
+  '..owwo......................owwo',
+  '..owo........................owo',
+  '..owo........................owo',
+  '..owo........................owo',
+  '..owo........................owo',
+  '..owo........................owo',
+  '..owo........................owo',
+  '..owo........................owo',
+  '..ooo........................ooo',
+  '................................',
+  '................................',
+  '................................'
 ];
 
-// 各状态只改眼睛那几行
 const EYES = {
-  idle: {},
-  happy: {
-    10: '.....owkkkkwwwwwwwwwwkkkkwo.....',
-    11: '.....owkkkkoowwwwwwookkkkwo.....'
-  },
-  jealous: {
-    9:  '.....owwwwooowwwwwwooowwwwo.....',
-    10: '.....owkkkwoowwwwwwoowkkkwo.....',
-    11: '.....owkkkwoowwwwwwoowkkkwo.....'
-  },
-  doze: {
-    10: '.....owwwwwwwwwwwwwwwwwwwwo.....',
-    11: '.....owkkkwooowwwwooowkkkwo.....'
-  }
-};
-
-// 尾巴摇摆：开心时逐帧改尾巴那几行
-const TAIL_FRAMES = [
-  // 帧0: 往左
-  {
-    17: '.....owwwwwwwwwwwwwwwwwwwwoo....',
-    18: '.....owwwwwwwwwwwwwwwwwwwoowo...',
-    19: '.....owwwwwwwwwrwrwwwwwwwoowo...',
-    20: '.....owwwwwwwwwrrrwwwwwwwoowo...',
-    21: '.....owwwwwwwwwwrwwwwwwwwoooo...'
-  },
-  // 帧1: 中间（默认）
-  {},
-  // 帧2: 往右甩
-  {
-    17: '.....owwwwwwwwwwwwwwwwwwwwoooo..',
-    18: '.....owwwwwwwwwwwwwwwwwwwwowwoo',
-    19: '.....owwwwwwwwwrwrwwwwwwwwowwoo',
-    20: '.....owwwwwwwwwrrrwwwwwwwwowwoo',
-    21: '.....owwwwwwwwwwrwwwwwwwwwoowoo'
-  }
-];
-
-// 服装叠加图层（坐标点数组 [x, y, colorKey]）
-const OUTFITS = {
-  headphones: [
-    // 头梁（第4~5行）
-    [8,4,'h'],[9,4,'h'],[10,4,'h'],[11,4,'h'],[12,4,'h'],[13,4,'h'],[14,4,'h'],[15,4,'h'],[16,4,'h'],[17,4,'h'],[18,4,'h'],[19,4,'h'],[20,4,'h'],[21,4,'h'],[22,4,'h'],[23,4,'h'],
-    [9,5,'h'],[10,5,'h'],[20,5,'h'],[21,5,'h'],
-    // 左耳罩
-    [5,8,'h'],[6,8,'h'],[5,9,'h'],[6,9,'h'],[7,9,'h'],[5,10,'h'],[6,10,'h'],[7,10,'h'],[5,11,'h'],[6,11,'h'],[7,11,'h'],[6,10,'k'],
-    // 右耳罩
-    [24,8,'h'],[25,8,'h'],[26,8,'h'],[24,9,'h'],[25,9,'h'],[26,9,'h'],[24,10,'h'],[25,10,'h'],[26,10,'h'],[24,11,'h'],[25,11,'h'],[25,10,'k']
+  idle: [
+    '....owwwooowwwwwwwwwwwooowwwwo..',
+    '....owwoooowwwwwwwwwwwoooowwwo..',
+    '....owwwooowwwwwwwwwwwooowwwwo..'
   ],
-  chain: [
-    // 金链横条（第13~14行）
-    [9,13,'y'],[11,13,'y'],[13,13,'y'],[15,13,'y'],[17,13,'y'],[19,13,'y'],[21,13,'y'],
-    [10,14,'y'],[12,14,'y'],[14,14,'y'],[16,14,'y'],[18,14,'y'],[20,14,'y'],
-    // 吊坠
-    [15,15,'y'],[15,16,'y'],[14,16,'y'],[16,16,'y']
+  happy: [
+    '....owwwwowwwwwwwwwwwwwowwwwwo..',
+    '....owwwoowwwwwwwwwwwwwoowwwwo..',
+    '....owwwooowwwwwwwwwwwooowwwwo..'
   ],
-  glasses: [
-    // 左镜框（第9~11行）
-    [9,9,'c'],[10,9,'c'],[11,9,'c'],[9,10,'c'],[11,10,'c'],[9,11,'c'],[10,11,'c'],[11,11,'c'],[10,10,'w'],
-    // 右镜框
-    [19,9,'c'],[20,9,'c'],[21,9,'c'],[19,10,'c'],[21,10,'c'],[19,11,'c'],[20,11,'c'],[21,11,'c'],[20,10,'w'],
-    // 鼻梁
-    [14,10,'c'],[15,10,'c'],[16,10,'c']
+  jealous: [
+    '....owwooowwwwwwwwwwwwwooowwwo..',
+    '....owwwooowwwwwwwwwwwooowwwwo..',
+    '....owwwwooowwwwwwwwwooowwwwwo..'
   ],
-  bandana: [
-    // 额前横条（第6~7行）
-    [8,6,'b'],[9,6,'b'],[10,6,'b'],[11,6,'b'],[12,6,'b'],[13,6,'b'],[14,6,'b'],[15,6,'b'],[16,6,'b'],[17,6,'b'],[18,6,'b'],[19,6,'b'],[20,6,'b'],[21,6,'b'],[22,6,'b'],[23,6,'b'],
-    [9,7,'b'],[10,7,'b'],[20,7,'b'],[21,7,'b'],
-    // 飘带（右侧）
-    [24,8,'b'],[25,8,'b'],[24,9,'b'],[25,9,'b'],[25,10,'b'],[26,10,'b'],[26,11,'b'],[27,11,'b']
-  ],
-  bow: [
-    // 蝴蝶结（头顶第3~5行）
-    [10,3,'p'],[11,3,'p'],[12,3,'p'],[13,3,'p'],[14,3,'p'],[15,3,'p'],[16,3,'p'],[17,3,'p'],[18,3,'p'],[19,3,'p'],[20,3,'p'],
-    [9,4,'p'],[10,4,'p'],[11,4,'p'],[12,4,'p'],[13,4,'p'],[14,4,'p'],[15,4,'p'],[16,4,'p'],[17,4,'p'],[18,4,'p'],[19,4,'p'],[20,4,'p'],[21,4,'p'],
-    [11,5,'p'],[12,5,'p'],[13,5,'p'],[14,5,'p'],[15,5,'p'],[16,5,'p'],[17,5,'p'],[18,5,'p'],[19,5,'p']
+  doze: [
+    '....owwwwwwwwwwwwwwwwwwwwwwwwo..',
+    '....owwooooowwwwwwwwwooooowwwo..',
+    '....owwwwwwwwwwwwwwwwwwwwwwwwo..'
   ]
 };
 
-const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d');
+const TAIL_FRAMES = [
+  [
+    '...owwwwwwoooooooooooowwwwwwwwo.',
+    '...owwwwwo..............owwwwwo.',
+    '...owwwwo.......ooooo....owwwwo.',
+    '...owwwo.......owwwwwo....owwwo.',
+    '..owwwo.......owwwwwwwo...owwwo'
+  ],
+  [
+    '...owwwwwwoooooooooooowwwwwwwwo.',
+    '...owwwwwo..............owwwwwo.',
+    '...owwwwo................owwwwo.',
+    '...owwwo....ooooo.........owwwo.',
+    '..owwwo....owwwwwo........owwwo'
+  ],
+  [
+    '...owwwwwwoooooooooooowwwwwwwwo.',
+    '...owwwwwo..............owwwwwo.',
+    '...owwwwo....ooooo.......owwwwo.',
+    '...owwwo....owwwwwo.......owwwo.',
+    '..owwwo....owwwwwwwo......owwwo'
+  ]
+];
+
+const OUTFITS = {
+  headphones: [
+    [9,4,'h'],[10,4,'h'],[11,4,'h'],[12,4,'h'],[13,4,'h'],[14,4,'h'],[15,4,'h'],[16,4,'h'],[17,4,'h'],[18,4,'h'],[19,4,'h'],[20,4,'h'],[21,4,'h'],[22,4,'h'],
+    [6,8,'h'],[7,8,'h'],[6,9,'h'],[7,9,'k'],[6,10,'h'],[7,10,'h'],[6,11,'h'],[7,11,'h'],
+    [24,8,'h'],[25,8,'h'],[24,9,'k'],[25,9,'h'],[24,10,'h'],[25,10,'h'],[24,11,'h'],[25,11,'h']
+  ],
+  chain: [
+    [12,12,'y'],[14,12,'y'],[16,12,'y'],[18,12,'y'],
+    [13,13,'y'],[15,13,'y'],[17,13,'y'],[19,13,'y'],
+    [15,14,'y'],[16,14,'y'],[15,15,'y'],[16,15,'y'],[15,16,'y'],[16,16,'y']
+  ],
+  glasses: [
+    [9,10,'h'],[10,10,'c'],[11,10,'h'],[15,10,'h'],[20,10,'h'],[21,10,'c'],[22,10,'h'],
+    [9,11,'h'],[10,11,'c'],[11,11,'h'],[20,11,'h'],[21,11,'c'],[22,11,'h']
+  ],
+  bandana: [
+    [10,5,'n'],[11,5,'n'],[12,5,'n'],[13,5,'n'],[14,5,'n'],[15,5,'n'],[16,5,'n'],[17,5,'n'],[18,5,'n'],[19,5,'n'],[20,5,'n'],[21,5,'n'],
+    [10,6,'n'],[11,6,'n'],[12,6,'n'],[13,6,'n'],[14,6,'n'],[15,6,'n'],[16,6,'n'],[17,6,'n'],[18,6,'n'],[19,6,'n'],[20,6,'n'],[21,6,'n'],
+    [8,7,'n'],[9,7,'n'],[22,7,'n'],[23,7,'n'],
+    [8,8,'n'],[9,8,'n'],[22,8,'n'],[23,8,'n'],
+    [8,9,'n'],[9,9,'n'],[22,9,'n'],[23,9,'n']
+  ],
+  bow: [
+    [8,6,'p'],[9,6,'p'],[10,6,'p'],[21,6,'p'],[22,6,'p'],[23,6,'p'],
+    [8,7,'p'],[9,7,'p'],[10,7,'p'],[15,7,'p'],[21,7,'p'],[22,7,'p'],[23,7,'p'],
+    [8,8,'p'],[9,8,'p'],[10,8,'p'],[21,8,'p'],[22,8,'p'],[23,8,'p']
+  ]
+};
+
 let state = 'idle';
-let outfit = null;
+let currentOutfit = null;
 let t = 0;
 
-function currentGrid(){
+function currentGrid() {
   const g = BASE.slice();
-  const eyePatch = EYES[state];
-  for (const row in eyePatch) g[row] = eyePatch[row];
-  
-  // 开心时摇尾巴
-  if (state === 'happy'){
-    const frame = Math.floor(t / 7) % 3;
-    const tailPatch = TAIL_FRAMES[frame];
-    for (const row in tailPatch) g[row] = tailPatch[row];
+  const eyes = EYES[state] || EYES.idle;
+  g[9] = eyes[0];
+  g[10] = eyes[1];
+  g[11] = eyes[2];
+  if (state === 'happy') {
+    const tf = TAIL_FRAMES[Math.floor(t / 7) % 3];
+    g[17] = tf[0];
+    g[18] = tf[1];
+    g[19] = tf[2];
+    g[20] = tf[3];
+    g[21] = tf[4];
   }
-  
   return g;
 }
 
-function draw(offsetY, earLift){
-  ctx.clearRect(0, 0, 32, 34);
+function draw(offsetY, earLift) {
   const g = currentGrid();
-  for (let y = 0; y < g.length; y++){
-    // 耳朵那几行额外抬一格，做抖耳朵
-    const dy = (y <= 4 ? earLift : 0);
-    const line = g[y];
-    for (let x = 0; x < line.length; x++){
-      const col = P[line[x]];
-      if (col){
-        ctx.fillStyle = col;
-        ctx.fillRect(x, y + offsetY + dy, 1, 1);
-      }
+  for (let y = 0; y < g.length; y++) {
+    for (let x = 0; x < 32; x++) {
+      const ch = g[y][x];
+      if (ch === '.') continue;
+      const color = P[ch];
+      if (!color) continue;
+      let dy = 0;
+      if (y <= 4) dy = earLift;
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y + offsetY + dy, 1, 1);
     }
   }
-  
-  // 叠加服装
-  if (outfit && OUTFITS[outfit]){
-    OUTFITS[outfit].forEach(function(px){
-      ctx.fillStyle = P[px[2]];
-      ctx.fillRect(px[0], px[1] + offsetY, 1, 1);
+  if (currentOutfit && OUTFITS[currentOutfit]) {
+    OUTFITS[currentOutfit].forEach(([x, y, ch]) => {
+      const color = P[ch];
+      if (color) {
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y + offsetY, 1, 1);
+      }
     });
   }
-  
-  // 迷糊状态飘 z
-  if (state === 'doze'){
-    ctx.fillStyle = '#FFB3C6';
-    const zs = [[27, 6], [29, 3]];
-    const phase = Math.floor(t / 30) % 2;
-    zs.forEach(function(p, i){
-      const yy = p[1] - (phase && i === 0 ? 1 : 0);
-      ctx.fillRect(p[0], yy, 3, 1);
-      ctx.fillRect(p[0] + 1, yy + 1, 1, 1);
-      ctx.fillRect(p[0], yy + 2, 3, 1);
-    });
+  if (state === 'doze') {
+    ctx.fillStyle = P.k;
+    ctx.fillRect(27, 6 + offsetY, 1, 1);
+    ctx.fillRect(29, 3 + offsetY, 1, 1);
   }
 }
 
-function frame(){
+const cvs = document.getElementById('c');
+const ctx = cvs.getContext('2d');
+
+function frame() {
   t++;
   const slow = (state === 'doze') ? 46 : 24;
-  const breathe = Math.floor(t / slow) % 2;
-  // 开心的时候耳朵抖得勤
-  const earLift = (state === 'happy' && Math.floor(t / 9) % 2) ? -1 : 0;
-  draw(breathe, earLift);
+  const breath = Math.sin(t / slow) * 0.5;
+  const earLift = (state === 'idle') ? Math.sin(t / 18) * 0.3 : 0;
+  ctx.clearRect(0, 0, 32, 34);
+  draw(breath, earLift);
   requestAnimationFrame(frame);
 }
-
 frame();
 
-// Android WebView 交互接口
-window.petEngine = {
-  onTap: function() {
-    state = 'idle';
-  },
-  onDoubleTap: function() {
-    state = 'happy';
-    setTimeout(function(){ if(state === 'happy') state = 'idle'; }, 3000);
-  },
-  onLongPress: function() {
-    state = 'jealous';
-    setTimeout(function(){ if(state === 'jealous') state = 'idle'; }, 2000);
-  },
-  setState: function(s) {
-    state = s;
-  },
-  setOutfit: function(o) {
-    outfit = o;
+let tapTimeout = null;
+let lastTapTime = 0;
+
+function onTap() {
+  const now = Date.now();
+  if (now - lastTapTime < 300) {
+    clearTimeout(tapTimeout);
+    onDoubleTap();
+    lastTapTime = 0;
+  } else {
+    lastTapTime = now;
+    tapTimeout = setTimeout(() => {
+      console.log('单击');
+    }, 300);
   }
-};
+}
+
+function onDoubleTap() {
+  state = 'happy';
+  setTimeout(() => { if (state === 'happy') state = 'idle'; }, 3000);
+}
+
+function onLongPress() {
+  if (currentOutfit !== 'bow') {
+    state = 'jealous';
+    setTimeout(() => { if (state === 'jealous') state = 'idle'; }, 2000);
+  }
+}
+
+function setState(s) {
+  state = s;
+}
+
+function setOutfit(name) {
+  currentOutfit = name;
+  if (name === 'bow') {
+    state = 'jealous';
+  }
+}
+
+window.petEngine = { onTap, onDoubleTap, onLongPress, setState, setOutfit };
 </script>
 </body>
 </html>
