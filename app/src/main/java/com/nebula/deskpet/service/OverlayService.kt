@@ -1,10 +1,15 @@
 package com.nebula.deskpet.service
 
 import android.app.*
+import android.app.usage.UsageEvents
+import android.app.usage.UsageStatsManager
+import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.view.*
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -20,12 +25,15 @@ class OverlayService : Service() {
     private var windowManager: WindowManager? = null
     private var overlayView: WebView? = null
     private var params: WindowManager.LayoutParams? = null
+    private val handler = Handler(Looper.getMainLooper())
+    private var lastPackage: String? = null
 
     companion object {
         private const val CHANNEL_ID = "pet_overlay_channel"
         private const val NOTIFICATION_ID = 1001
-        private const val PET_SIZE_DP = 180
-        private const val PET_HEIGHT_DP = 240
+        private const val PET_SIZE_DP = 220
+        private const val PET_HEIGHT_DP = 260
+        private const val POLL_INTERVAL_MS = 1500L
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -35,6 +43,7 @@ class OverlayService : Service() {
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, buildNotification("在的"))
         setupOverlay()
+        startForegroundAppMonitor()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
@@ -69,6 +78,79 @@ class OverlayService : Service() {
         }
 
         windowManager?.addView(overlayView, params)
+    }
+
+    // === 前台应用监测 ===
+
+    private val monitorRunnable = object : Runnable {
+        override fun run() {
+            val pkg = getForegroundApp()
+            if (pkg != null && pkg != lastPackage) {
+                lastPackage = pkg
+                onForegroundAppChanged(pkg)
+            }
+            handler.postDelayed(this, POLL_INTERVAL_MS)
+        }
+    }
+
+    private fun startForegroundAppMonitor() {
+        handler.post(monitorRunnable)
+    }
+
+    private fun getForegroundApp(): String? {
+        val usm = getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager ?: return null
+        val now = System.currentTimeMillis()
+        val events = usm.queryEvents(now - 2000, now)
+        var lastPackage: String? = null
+        val event = UsageEvents.Event()
+        while (events.hasNextEvent()) {
+            events.getNextEvent(event)
+            if (event.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
+                lastPackage = event.packageName
+            }
+        }
+        return lastPackage
+    }
+
+    private fun onForegroundAppChanged(pkg: String) {
+        val outfit: String?
+        val emotion: String?
+
+        when {
+            pkg.contains("netease") || pkg.contains("music") || pkg.contains("kugou") || pkg.contains("spotify") -> {
+                outfit = "headphones"
+                emotion = null
+            }
+            pkg.contains("taobao") || pkg.contains("jd") || pkg.contains("pinduoduo") || pkg.contains("xianyu") -> {
+                outfit = "chain"
+                emotion = null
+            }
+            pkg.contains("bilibili") || pkg.contains("douyin") || pkg.contains("iqiyi") -> {
+                outfit = "glasses"
+                emotion = null
+            }
+            pkg.contains("sgame") || pkg.contains("mihoyo") || pkg.contains("genshin") || pkg.contains("egggame") || pkg.contains("party") -> {
+                outfit = "bandana"
+                emotion = null
+            }
+            pkg.contains("tencent.mm") || pkg.contains("tencent.mobileqq") -> {
+                outfit = "bow"
+                emotion = "jealous"
+            }
+            else -> {
+                outfit = null
+                emotion = null
+            }
+        }
+
+        overlayView?.evaluateJavascript(
+            "window.petEngine && window.petEngine.setOutfit(${if (outfit != null) "'$outfit'" else "null"})", null
+        )
+        if (emotion != null) {
+            overlayView?.evaluateJavascript(
+                "window.petEngine && window.petEngine.setState('$emotion')", null
+            )
+        }
     }
 
     // === 手势 ===
@@ -176,6 +258,7 @@ class OverlayService : Service() {
     }
 
     override fun onDestroy() {
+        handler.removeCallbacks(monitorRunnable)
         overlayView?.let {
             windowManager?.removeView(it)
             it.destroy()
