@@ -13,22 +13,20 @@
 </head>
 <body>
 <div id="wrap"><canvas id="c" width="32" height="34"></canvas></div>
-
 <script>
-/* 32x34 像素画。白团子 + 黑描边 + 粉腮 + 胸口一颗粉心（我的记号）。
-   每一格都是手摆的，没用别人的图。 */
+/* 32x34 像素画：白团子、粉腮、胸口粉心。 */
 const P = {
   '.': null,
-  'o': '#2B2B2B',   // 描边
-  'w': '#FFFFFF',   // 身体
-  'g': '#EDEDED',   // 阴影绒毛
-  'k': '#FFA8B8',   // 腮红 / 耳内
-  'r': '#FF6B8A',   // 胸口心
-  'h': '#1A1A1A',   // 耳机深色
-  'y': '#FFD700',   // 金链子
-  'c': '#00CED1',   // 眼镜青
-  'b': '#8B4513',   // 头巾棕
-  'p': '#FF1493'    // 蝴蝶结粉
+  'o': '#2B2B2B',
+  'w': '#FFFFFF',
+  'g': '#EDEDED',
+  'k': '#FFA8B8',
+  'r': '#FF6B8A',
+  'h': '#1A1A1A',
+  'y': '#FFD700',
+  'c': '#00CED1',
+  'b': '#8B4513',
+  'p': '#FF1493'
 };
 
 const BASE = [
@@ -53,7 +51,7 @@ const BASE = [
 '.....owwwwwwwwwwwwwwwwwwwwowwo..',
 '.....owwwwwwwwwrwrwwwwwwwwowwo..',
 '.....owwwwwwwwwrrrwwwwwwwwowwo..',
-'.....owwwwwwwwwwrwwwwwwwwwoowo..',
+'.....owwwwwwwwwwrwwwwwwwoowo..',
 '.....owwwwwwwwwwwwwwwwwwwwoooo..',
 '......owwwwwwwwwwwwwwwwwwwo.....',
 '......oowwwwwwwwwwwwwwwwwoo.....',
@@ -101,13 +99,13 @@ const TAIL_FRAMES = [
   }
 ];
 
-// 服装是独立图层；默认不显示，因此小狗外形保持第一版。
+// 服装为独立图层，不改变默认小狗的外形或尺寸。
 const OUTFITS = {
   headphones: [
-    [8,4,'h[9,4,'h'],[10,4,'h'],[11,4,'h'],[12,4,'h'],[13,4,'h'],[14,4,'h'],[15,4,'h'],[16,4,'h'],[17,4,'h'],[18,4,'h'],[19,4,'h'],[20,4,'h'],[21,4,'h'],[22,4,'h'],[23,4,'h'],
+    [8,4,'h'],[9,4,'h'],[10,4,'h'],[11,4,'h'],[12,4,'h'],[13,4,'h'],[14,4,'h'],[15,4,'h'],[16,4,'h'],[17,4,'h'],[18,4,'h'],[19,4,'h'],[20,4,'h'],[21,4,'h'],[22,4,'h'],[23,4,'h'],
     [9,5,'h'],[10,5,'h'],[20,5,'h'],[21,5,'h'],
     [5,8,'h'],[6,8,'h'],[5,9,'h'],[6,9,'h'],[7,9,'h'],[5,10,'h'],[6,10,'h'],[7,10,'h'],[5,11,'h'],[6,11,'h'],[7,11,'h'],[6,10,'k'],
-    [24,8,'h[25,8,'h'],[26,8,'h'],[24,9,'h'],[25,9,'h'],[26,9,'h'],[24,10,'h'],[25,10,'h'],[26,10,'h'],[24,11,'h'],[25,11,'h'],[25,10,'k']
+    [24,8,'h'],[25,8,'h'],[26,8,'h'],[24,9,'h'],[25,9,'h'],[26,9,'h'],[24,10,'h'],[25,10,'h'],[26,10,'h'],[24,11,'h'],[25,11,'h'],[25,10,'k']
   ],
   chain: [
     [9,13,'y'],[11,13,'y'],[13,13,'y'],[15,13,'y'],[17,13,'y'],[19,13,'y'],[21,13,'y'],
@@ -139,11 +137,10 @@ let t = 0;
 
 function currentGrid(){
   const g = BASE.slice();
-  const eyePatch = EYES[state];
+  const eyePatch = EYES[state] || EYES.idle;
   for (const row in eyePatch) g[row] = eyePatch[row];
   if (state === 'happy'){
-    const frame = Math.floor(t / 7) % 3;
-    const tailPatch = TAIL_FRAMES[frame];
+    const tailPatch = TAIL_FRAMES[Math.floor(t / 7) % 3];
     for (const row in tailPatch) g[row] = tailPatch[row];
   }
   return g;
@@ -153,12 +150,12 @@ function draw(offsetY, earLift){
   ctx.clearRect(0, 0, 32, 34);
   const g = currentGrid();
   for (let y = 0; y < g.length; y++){
-    const dy = (y <= 4 ? earLift : 0);
+    const dy = y <= 4 ? earLift : 0;
     const line = g[y];
     for (let x = 0; x < line.length; x++){
-      const col = P[line[x]];
-      if (col){
-        ctx.fillStyle = col;
+      const color = P[line[x]];
+      if (color){
+        ctx.fillStyle = color;
         ctx.fillRect(x, y + offsetY + dy, 1, 1);
       }
     }
@@ -177,34 +174,33 @@ function draw(offsetY, earLift){
       const yy = p[1] - (phase && i === 0 ? 1 : 0);
       ctx.fillRect(p[0], yy, 3, 1);
       ctx.fillRect(p[0] + 1, yy + 1, 1, 1);
-      ctx.fillRect(p[0], yy + 2, 3, 1);
+      ctx.fillRect(p[0], yy +2, 3, 1);
     });
   }
 }
 
 function frame(){
   t++;
-  const slow = (state === 'doze') ? 46 : 24;
+  const slow = state === 'doze' ? 46 : 24;
   const breathe = Math.floor(t / slow) % 2;
-  const earLift = (state === 'happy' && Math.floor(t / 9) % 2) ? -1 : 0;
+  const earLift = state === 'happy' && Math.floor(t / 9) % 2 ? -1 : 0;
   draw(breathe, earLift);
   requestAnimationFrame(frame);
 }
-
 frame();
 
 window.petEngine = {
-  onTap: function() { state = 'idle'; },
-  onDoubleTap: function() {
+  onTap: function(){ state = 'idle'; },
+  onDoubleTap: function(){
     state = 'happy';
-    setTimeout(function(){ if(state === 'happy') state = 'idle'; }, 3000);
+    setTimeout(function(){ if (state === 'happy') state = 'idle'; }, 3000);
   },
-  onLongPress: function() {
+  onLongPress: function(){
     state = 'jealous';
-    setTimeout(function(){ if(state === 'jealous') state = 'idle'; }, 2000);
+    setTimeout(function(){ if (state === 'jealous') state = 'idle'; }, 2000);
   },
-  setState: function(s) { state = s; },
-  setOutfit: function(o) { outfit = o; }
+  setState: function(s){ state = s; },
+  setOutfit: function(o){ outfit = o; }
 };
 </script>
 </body>
