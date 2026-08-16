@@ -8,7 +8,7 @@
   html,body{width:100%;height:100%;background:transparent;overflow:hidden;
     -webkit-user-select:none;user-select:none;display:flex;align-items:center;justify-content:center}
   #wrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
-  canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block;width:100%;height:auto}
+  canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 </style>
 </head>
 <body>
@@ -66,7 +66,6 @@ const BASE = [
 '................................'
 ];
 
-// 各状态只改眼睛那几行
 const EYES = {
   idle: {},
   happy: {
@@ -84,9 +83,7 @@ const EYES = {
   }
 };
 
-// 尾巴摇摆：开心时逐帧改尾巴那几行
 const TAIL_FRAMES = [
-  // 帧0: 往左
   {
     17: '.....owwwwwwwwwwwwwwwwwwwwoo....',
     18: '.....owwwwwwwwwwwwwwwwwwwoowo...',
@@ -94,9 +91,7 @@ const TAIL_FRAMES = [
     20: '.....owwwwwwwwwrrrwwwwwwwoowo...',
     21: '.....owwwwwwwwwwrwwwwwwwwoooo...'
   },
-  // 帧1: 中间（默认）
   {},
-  // 帧2: 往右甩
   {
     17: '.....owwwwwwwwwwwwwwwwwwwwoooo..',
     18: '.....owwwwwwwwwwwwwwwwwwwwowwoo',
@@ -106,41 +101,30 @@ const TAIL_FRAMES = [
   }
 ];
 
-// 服装叠加图层（坐标点数组 [x, y, colorKey]）
+// 服装是独立图层；默认不显示，因此小狗外形保持第一版。
 const OUTFITS = {
   headphones: [
-    // 头梁（第4~5行）
-    [8,4,'h'],[9,4,'h'],[10,4,'h'],[11,4,'h'],[12,4,'h'],[13,4,'h'],[14,4,'h'],[15,4,'h'],[16,4,'h'],[17,4,'h'],[18,4,'h'],[19,4,'h'],[20,4,'h'],[21,4,'h'],[22,4,'h'],[23,4,'h'],
+    [8,4,'h[9,4,'h'],[10,4,'h'],[11,4,'h'],[12,4,'h'],[13,4,'h'],[14,4,'h'],[15,4,'h'],[16,4,'h'],[17,4,'h'],[18,4,'h'],[19,4,'h'],[20,4,'h'],[21,4,'h'],[22,4,'h'],[23,4,'h'],
     [9,5,'h'],[10,5,'h'],[20,5,'h'],[21,5,'h'],
-    // 左耳罩
     [5,8,'h'],[6,8,'h'],[5,9,'h'],[6,9,'h'],[7,9,'h'],[5,10,'h'],[6,10,'h'],[7,10,'h'],[5,11,'h'],[6,11,'h'],[7,11,'h'],[6,10,'k'],
-    // 右耳罩
-    [24,8,'h'],[25,8,'h'],[26,8,'h'],[24,9,'h'],[25,9,'h'],[26,9,'h'],[24,10,'h'],[25,10,'h'],[26,10,'h'],[24,11,'h'],[25,11,'h'],[25,10,'k']
+    [24,8,'h[25,8,'h'],[26,8,'h'],[24,9,'h'],[25,9,'h'],[26,9,'h'],[24,10,'h'],[25,10,'h'],[26,10,'h'],[24,11,'h'],[25,11,'h'],[25,10,'k']
   ],
   chain: [
-    // 金链横条（第13~14行）
     [9,13,'y'],[11,13,'y'],[13,13,'y'],[15,13,'y'],[17,13,'y'],[19,13,'y'],[21,13,'y'],
     [10,14,'y'],[12,14,'y'],[14,14,'y'],[16,14,'y'],[18,14,'y'],[20,14,'y'],
-    // 吊坠
     [15,15,'y'],[15,16,'y'],[14,16,'y'],[16,16,'y']
   ],
   glasses: [
-    // 左镜框（第9~11行）
     [9,9,'c'],[10,9,'c'],[11,9,'c'],[9,10,'c'],[11,10,'c'],[9,11,'c'],[10,11,'c'],[11,11,'c'],[10,10,'w'],
-    // 右镜框
     [19,9,'c'],[20,9,'c'],[21,9,'c'],[19,10,'c'],[21,10,'c'],[19,11,'c'],[20,11,'c'],[21,11,'c'],[20,10,'w'],
-    // 鼻梁
     [14,10,'c'],[15,10,'c'],[16,10,'c']
   ],
   bandana: [
-    // 额前横条（第6~7行）
     [8,6,'b'],[9,6,'b'],[10,6,'b'],[11,6,'b'],[12,6,'b'],[13,6,'b'],[14,6,'b'],[15,6,'b'],[16,6,'b'],[17,6,'b'],[18,6,'b'],[19,6,'b'],[20,6,'b'],[21,6,'b'],[22,6,'b'],[23,6,'b'],
     [9,7,'b'],[10,7,'b'],[20,7,'b'],[21,7,'b'],
-    // 飘带（右侧）
     [24,8,'b'],[25,8,'b'],[24,9,'b'],[25,9,'b'],[25,10,'b'],[26,10,'b'],[26,11,'b'],[27,11,'b']
   ],
   bow: [
-    // 蝴蝶结（头顶第3~5行）
     [10,3,'p'],[11,3,'p'],[12,3,'p'],[13,3,'p'],[14,3,'p'],[15,3,'p'],[16,3,'p'],[17,3,'p'],[18,3,'p'],[19,3,'p'],[20,3,'p'],
     [9,4,'p'],[10,4,'p'],[11,4,'p'],[12,4,'p'],[13,4,'p'],[14,4,'p'],[15,4,'p'],[16,4,'p'],[17,4,'p'],[18,4,'p'],[19,4,'p'],[20,4,'p'],[21,4,'p'],
     [11,5,'p'],[12,5,'p'],[13,5,'p'],[14,5,'p'],[15,5,'p'],[16,5,'p'],[17,5,'p'],[18,5,'p'],[19,5,'p']
@@ -157,14 +141,11 @@ function currentGrid(){
   const g = BASE.slice();
   const eyePatch = EYES[state];
   for (const row in eyePatch) g[row] = eyePatch[row];
-  
-  // 开心时摇尾巴
   if (state === 'happy'){
     const frame = Math.floor(t / 7) % 3;
     const tailPatch = TAIL_FRAMES[frame];
     for (const row in tailPatch) g[row] = tailPatch[row];
   }
-  
   return g;
 }
 
@@ -172,7 +153,6 @@ function draw(offsetY, earLift){
   ctx.clearRect(0, 0, 32, 34);
   const g = currentGrid();
   for (let y = 0; y < g.length; y++){
-    // 耳朵那几行额外抬一格，做抖耳朵
     const dy = (y <= 4 ? earLift : 0);
     const line = g[y];
     for (let x = 0; x < line.length; x++){
@@ -183,16 +163,12 @@ function draw(offsetY, earLift){
       }
     }
   }
-  
-  // 叠加服装
   if (outfit && OUTFITS[outfit]){
     OUTFITS[outfit].forEach(function(px){
       ctx.fillStyle = P[px[2]];
       ctx.fillRect(px[0], px[1] + offsetY, 1, 1);
     });
   }
-  
-  // 迷糊状态飘 z
   if (state === 'doze'){
     ctx.fillStyle = '#FFB3C6';
     const zs = [[27, 6], [29, 3]];
@@ -210,7 +186,6 @@ function frame(){
   t++;
   const slow = (state === 'doze') ? 46 : 24;
   const breathe = Math.floor(t / slow) % 2;
-  // 开心的时候耳朵抖得勤
   const earLift = (state === 'happy' && Math.floor(t / 9) % 2) ? -1 : 0;
   draw(breathe, earLift);
   requestAnimationFrame(frame);
@@ -218,11 +193,8 @@ function frame(){
 
 frame();
 
-// Android WebView 交互接口
 window.petEngine = {
-  onTap: function() {
-    state = 'idle';
-  },
+  onTap: function() { state = 'idle'; },
   onDoubleTap: function() {
     state = 'happy';
     setTimeout(function(){ if(state === 'happy') state = 'idle'; }, 3000);
@@ -231,12 +203,8 @@ window.petEngine = {
     state = 'jealous';
     setTimeout(function(){ if(state === 'jealous') state = 'idle'; }, 2000);
   },
-  setState: function(s) {
-    state = s;
-  },
-  setOutfit: function(o) {
-    outfit = o;
-  }
+  setState: function(s) { state = s; },
+  setOutfit: function(o) { outfit = o; }
 };
 </script>
 </body>
